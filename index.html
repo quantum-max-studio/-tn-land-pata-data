@@ -91,7 +91,8 @@
 
 <div class="search-bar">
     <div style="display:flex; align-items:center; color:var(--m); font-size:20px; padding-left:5px;">🏭</div>
-    <input type="number" id="ta" placeholder="How many acres do you need? (e.g. 5000)" value="5000">
+    <input type="text" id="sq" placeholder="District or Sector (e.g. Cuddalore)" oninput="onFilter()" style="margin-right: 5px;">
+    <input type="number" id="ta" placeholder="Acres (e.g. 5000)" value="5000" style="width: 100px;">
     <button class="sbtn" onclick="aggregateSites()">🔎 Find Best Land</button>
 </div>
 
@@ -143,6 +144,7 @@
         <div class="gb" style="width:100%"></div>
     </div>
     <div id="slist"><span class="lb">Ready-Made Mega Sites</span></div>
+    <div id="plist" style="margin-top:20px;"><span class="lb">Individual Plots List</span></div>
 </div>
 
 <div class="prov" id="prov" onclick="showProv()">✓ Real Government Data (Click to see)</div>
@@ -241,18 +243,38 @@ function onFilter(){
     const minA=parseFloat(document.getElementById('r1').value);
     const minD=parseFloat(document.getElementById('r2').value);
     const maxS=parseFloat(document.getElementById('r3').value);
+    const query=document.getElementById('sq').value.toLowerCase();
+    
     document.getElementById('rv1').textContent=minA;
     document.getElementById('rv2').textContent=minD;
     document.getElementById('rv3').textContent=maxS;
 
-    FD=MD.filter(p=>activeTypes.has(p.land_type)&&p.size_acres>=minA&&p.disturbance_dist_km>=minD&&p.dist_to_sea_km<=maxS);
-    updateStats();renderMap();
+    FD=MD.filter(p=>
+        activeTypes.has(p.land_type)&&
+        p.size_acres>=minA&&
+        p.disturbance_dist_km>=minD&&
+        p.dist_to_sea_km<=maxS&&
+        (p.district.toLowerCase().includes(query) || p.sector.toLowerCase().includes(query))
+    );
+    updateStats();renderMap();renderPlotList();
 }
 
 function updateStats(){
     document.getElementById('sp').textContent=FD.length;
     document.getElementById('sa').textContent=Math.round(FD.reduce((s,p)=>s+p.size_acres,0)).toLocaleString();
     document.getElementById('sv').textContent=Math.round(FD.reduce((s,p)=>s+p.total_plot_value_lakhs,0)/100).toLocaleString();
+}
+
+function renderPlotList(){
+    const el=document.getElementById('plist');el.innerHTML='<span class="lb">Individual Plots List</span>';
+    if(!FD.length) return;
+    FD.slice(0, 50).forEach(p=>{
+        const c=document.createElement('div');c.className='sc';
+        c.style.borderLeft='3px solid #ccc';
+        c.innerHTML=`<span class="sn">${p.sector} (${p.district})</span><span class="sm">${p.size_acres} Acres | ₹${(p.total_plot_value_lakhs/100).toFixed(2)} Cr</span>`;
+        c.onclick=()=>{map.setView([p.center_lat, p.center_lon], 14); showPlot(p)};
+        el.appendChild(c);
+    });
 }
 
 function renderMap(){
