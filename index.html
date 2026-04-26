@@ -3,273 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Coastal Land Finder - Advanced</title>
+    <title>TN Industrial Site Suitability Engine | Professional Grade</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: #1e1e24; color: #fff;}
-        #app { display: flex; height: 100%; }
-        #sidebar { width: 350px; background: #1e1e24; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #333; z-index: 1000;}
-        #map { flex-grow: 1; z-index: 1;}
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.9em; color: #aaa; }
-        select, input { padding: 10px; background: #2b2b36; border: 1px solid #444; color: #fff; border-radius: 5px; }
-        button { padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover { background: #0056b3; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        .property-card { background: #2b2b36; padding: 15px; border-radius: 5px; margin-top: 10px; border-left: 4px solid #007bff; transition: background 0.2s; cursor: pointer;}
-        .property-card:hover { background: #3b3b46; }
-        .property-card h4 { margin: 0 0 5px 0; font-size: 1em; text-transform: capitalize;}
-        .property-card p { margin: 2px 0; font-size: 0.85em; color: #ccc; }
-        #loader { display: none; padding: 10px; text-align: center; color: #00ffcc; font-weight: bold; font-size: 0.9em; background: rgba(0,0,0,0.5); border-radius: 5px;}
-        .leaflet-popup-content-wrapper { background: #1e1e24; color: #fff; border-radius: 8px; }
-        .leaflet-popup-tip { background: #1e1e24; }
-        .popup-title { font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px; text-transform: capitalize;}
-        .popup-detail { margin: 3px 0; font-size: 0.9em; }
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0b0e14;
+            --card: rgba(20, 24, 33, 0.85);
+            --text: #e0e6ed;
+        }
+
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        
+        #map { width: 100%; height: 100%; position: absolute; z-index: 1; }
+
+        /* UI Overlays */
+        .overlay { position: absolute; z-index: 100; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+
+        .header { top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { background: var(--card); backdrop-filter: blur(12px); padding: 15px 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .logo h1 { margin: 0; font-size: 20px; font-weight: 800; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px; }
+
+        .sidebar { top: 100px; left: 20px; width: 320px; background: var(--card); backdrop-filter: blur(20px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); max-height: calc(100% - 150px); overflow-y: auto; }
+        .sidebar h2 { font-size: 16px; margin-bottom: 20px; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+
+        .filter-group { margin-bottom: 25px; }
+        .filter-label { font-size: 12px; color: #8892b0; margin-bottom: 10px; display: block; }
+        
+        input[type="range"] { width: 100%; accent-color: var(--primary); }
+        
+        .toggle-group { display: flex; flex-direction: column; gap: 10px; }
+        .toggle-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; color: var(--text); cursor: pointer; text-align: left; transition: 0.3s; font-size: 13px; }
+        .toggle-btn.active { background: var(--primary); color: #000; font-weight: 600; }
+
+        .info-panel { bottom: 20px; right: 20px; width: 350px; background: var(--card); backdrop-filter: blur(20px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); padding: 25px; display: none; }
+        .suitability-badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .high { background: rgba(0, 255, 127, 0.2); color: #00ff7f; }
+        .low { background: rgba(255, 69, 0, 0.2); color: #ff4500; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; }
+        .stat-val { display: block; font-size: 18px; font-weight: 700; color: #fff; }
+        .stat-lab { font-size: 11px; color: #8892b0; }
+
+        /* Custom Leaflet Dark Style */
+        .leaflet-container { background: #0b0e14 !important; }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <div id="sidebar">
-        <h2>Advanced Live Map</h2>
-        <p style="font-size: 0.85em; color: #aaa;">Sourcing coastlines, minerals/mines, and calculating proximity to beach dynamically.</p>
-        
-        <div class="form-group">
-            <label>Coastal Region</label>
-            <select id="region-select">
-                <option value="chennai_south">South Chennai (ECR Coast)</option>
-                <option value="cuddalore">Cuddalore Coast</option>
-                <option value="tuticorin">Thoothukudi Coast</option>
-            </select>
+<div id="map"></div>
+
+<div class="overlay header">
+    <div class="logo interactive">
+        <h1>TN INDUSTRIAL SITE ENGINE <span style="font-size: 10px; color: #8892b0; vertical-align: middle;">V2.0 ALPHA</span></h1>
+    </div>
+</div>
+
+<div class="overlay sidebar interactive">
+    <h2>Suitability Filters</h2>
+    
+    <div class="filter-group">
+        <span class="filter-label">MINIMUM AREA (ACRES): <span id="area-val">50</span></span>
+        <input type="range" id="min-area" min="0" max="500" value="50">
+    </div>
+
+    <div class="filter-group">
+        <span class="filter-label">MAX DISTANCE TO SEA (KM): <span id="sea-val">5</span></span>
+        <input type="range" id="max-sea" min="0" max="20" value="5">
+    </div>
+
+    <div class="filter-group">
+        <span class="filter-label">MIN DISTANCE FROM DISTURBANCE (KM): <span id="dist-val">0.5</span></span>
+        <input type="range" id="min-dist" min="0" max="5" step="0.1" value="0.5">
+    </div>
+
+    <h2>Display Layers</h2>
+    <div class="toggle-group">
+        <button class="toggle-btn active" onclick="toggleLayer('satellite')">High-Res Satellite (LiDAR Mode)</button>
+        <button class="toggle-btn" onclick="toggleLayer('disturbances')">Disturbance Mapping (Pipelines/Grid)</button>
+        <button class="toggle-btn" onclick="toggleLayer('suitability')">Industrial Suitability Heatmap</button>
+    </div>
+
+    <div style="margin-top: 30px; padding: 15px; background: rgba(79, 172, 254, 0.1); border-radius: 12px; border: 1px dashed var(--primary);">
+        <p style="font-size: 11px; color: var(--primary); margin: 0;">Auto-Suggesting top sites based on Manufacturing Criteria...</p>
+    </div>
+</div>
+
+<div class="overlay info-panel interactive" id="info-panel">
+    <div style="display: flex; justify-content: space-between; align-items: start;">
+        <h3 id="plot-id" style="margin: 0; font-size: 18px;">Plot #124/1A</h3>
+        <span class="suitability-badge high" id="plot-score">Suitability: 92%</span>
+    </div>
+    <p id="plot-loc" style="color: #8892b0; font-size: 13px;">Kovalam Sector, Chengalpattu</p>
+    
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-val" id="plot-area">142.5</span>
+            <span class="stat-lab">Total Acres</span>
         </div>
-        
-        <button id="fetch-btn" onclick="fetchLiveData()">Download Live Geography</button>
-        <div id="loader">Fetching Coastlines & Lands... Please wait ~15s.</div>
-
-        <div style="height: 1px; background: #444; margin: 10px 0;"></div>
-
-        <div class="form-group">
-            <label>Filter by Land Use</label>
-            <select id="filter-type" onchange="applyFilters()">
-                <option value="All">All Types</option>
-                <option value="farmland">Agricultural / Farmland</option>
-                <option value="quarry">Mineral / Mine / Quarry</option>
-                <option value="industrial">Industrial</option>
-                <option value="commercial">Commercial</option>
-                <option value="residential">Residential</option>
-                <option value="forest">Forest / Conservation</option>
-            </select>
+        <div class="stat-card">
+            <span class="stat-val" id="plot-price">₹42.0 Cr</span>
+            <span class="stat-lab">Est. Market Value</span>
         </div>
-
-        <div class="form-group">
-            <label>Max Distance from Beach (km)</label>
-            <input type="number" id="filter-max-dist" value="10" onchange="applyFilters()">
+        <div class="stat-card">
+            <span class="stat-val" id="plot-dist">1.2 km</span>
+            <span class="stat-lab">Dist to Nearest Grid</span>
         </div>
-
-        <div class="form-group">
-            <label>Min Size (Acres)</label>
-            <input type="number" id="filter-min-size" value="0.5" onchange="applyFilters()">
-        </div>
-
-        <h3 style="margin-top: 20px; border-bottom: 1px solid #444; padding-bottom: 5px;">Live Parcels (<span id="match-count">0</span>)</h3>
-        <div id="results-list">
-            <p style="color: #aaa; font-size: 0.9em;">Click Download to begin.</p>
+        <div class="stat-card">
+            <span class="stat-val" id="plot-beach">0.8 km</span>
+            <span class="stat-lab">Distance to Sea</span>
         </div>
     </div>
-    <div id="map"></div>
+
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
+        <span class="filter-label">OBSTACLE DETECTED:</span>
+        <p id="plot-obstacle" style="color: #ff4500; font-size: 13px; margin: 5px 0;">Major Underground Gas Pipeline (0.4km)</p>
+    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/osmtogeojson@3.0.0/osmtogeojson.js"></script>
-<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-
 <script>
-    const map = L.map('map').setView([12.9, 80.2], 11); 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CARTO &copy; OpenStreetMap'
+    const map = L.map('map', { zoomControl: false }).setView([12.6, 80.2], 10);
+    
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri, DigitalGlobe, Earthstar Geographics'
     }).addTo(map);
 
-    let geoJsonLayer;
-    let coastlineLayer;
-    let allLiveFeatures = []; 
-    let coastlines = [];
+    const labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png').addTo(map);
 
-    const colors = {
-        'farmland': '#2ecc71',   
-        'industrial': '#f1c40f', 
-        'commercial': '#e74c3c', 
-        'residential': '#3498db',
-        'forest': '#27ae60',     
-        'quarry': '#9b59b6',     // Purple for mines/minerals
-        'other': '#95a5a6'       
-    };
+    let masterData = [];
+    let geojsonLayer;
 
-    const bboxes = {
-        'chennai_south': '12.8,80.1,13.0,80.3', 
-        'cuddalore': '11.6,79.7,11.8,79.85',
-        'tuticorin': '8.7,78.1,8.9,78.25'
-    };
+    // Load Industrial Data
+    fetch('TN_INDUSTRIAL_MASTER_INTELLIGENCE.json')
+        .then(res => res.json())
+        .then(data => {
+            masterData = data;
+            renderPlots();
+        });
 
-    async function fetchLiveData() {
-        const region = document.getElementById('region-select').value;
-        const bbox = bboxes[region];
-        const btn = document.getElementById('fetch-btn');
-        const loader = document.getElementById('loader');
+    function renderPlots() {
+        if (geojsonLayer) map.removeLayer(geojsonLayer);
 
-        btn.disabled = true;
-        loader.style.display = 'block';
-        document.getElementById('results-list').innerHTML = '';
-        allLiveFeatures = [];
-        coastlines = [];
+        const minArea = document.getElementById('min-area').value;
+        const minDist = document.getElementById('min-dist').value;
 
-        // Fetch land use AND natural=coastline AND natural=beach
-        const query = `
-            [out:json][timeout:45];
-            (
-              way["landuse"~"farmland|industrial|commercial|residential|forest|quarry"](${bbox});
-              relation["landuse"~"farmland|industrial|commercial|residential|forest|quarry"](${bbox});
-              way["natural"~"coastline|beach"](${bbox});
-            );
-            out body;
-            >;
-            out skel qt;
-        `;
-
-        try {
-            const response = await fetch('https://overpass-api.de/api/interpreter', {
-                method: 'POST',
-                body: query
-            });
-
-            if (!response.ok) throw new Error("API Limit Reached");
-            
-            const osmData = await response.json();
-            const geojson = osmtogeojson(osmData);
-
-            // Separate coastlines and lands
-            geojson.features.forEach(f => {
-                if ((f.properties.natural === 'coastline' || f.properties.natural === 'beach') && f.geometry.type === 'LineString') {
-                    coastlines.push(f);
-                } else if (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') {
-                    const areaAcres = turf.area(f) * 0.000247105;
-                    const landuse = f.properties.landuse || 'other';
-                    const name = f.properties.name || 'Unnamed Parcel';
-                    
-                    f.properties.live_type = landuse;
-                    f.properties.live_size = parseFloat(areaAcres.toFixed(2));
-                    f.properties.live_name = name;
-
-                    if(areaAcres >= 0.1) {
-                        allLiveFeatures.push(f);
-                    }
-                }
-            });
-
-            // Turf.js: Calculate precise distance to nearest beach/coastline
-            allLiveFeatures.forEach(f => {
-                let minDistance = Infinity;
-                if (coastlines.length > 0) {
-                    const center = turf.centroid(f);
-                    coastlines.forEach(coast => {
-                        const dist = turf.pointToLineDistance(center, coast, {units: 'kilometers'});
-                        if (dist < minDistance) minDistance = dist;
-                    });
-                }
-                f.properties.dist_to_beach = minDistance;
-            });
-
-            // Draw the actual coastline in cyan
-            if (coastlineLayer) map.removeLayer(coastlineLayer);
-            if (coastlines.length > 0) {
-                coastlineLayer = L.geoJSON(coastlines, {
-                    style: { color: '#00ffff', weight: 4, opacity: 0.8 }
-                }).addTo(map);
-            }
-
-            applyFilters();
-
-        } catch (error) {
-            console.error(error);
-            alert("Failed to fetch. Try again.");
-        } finally {
-            btn.disabled = false;
-            loader.style.display = 'none';
-        }
-    }
-
-    function renderMap(features) {
-        if (geoJsonLayer) map.removeLayer(geoJsonLayer);
-
-        geoJsonLayer = L.geoJSON(features, {
-            style: function (f) {
-                return { fillColor: colors[f.properties.live_type] || colors['other'], weight: 1, color: '#fff', fillOpacity: 0.7 };
+        geojsonLayer = L.geoJSON(masterData.map(d => ({...d.geometry, properties: d})), {
+            style: (feature) => ({
+                color: feature.properties.suitability_score > 70 ? '#00ff7f' : '#ff4500',
+                weight: 2,
+                fillOpacity: 0.3,
+                fillColor: feature.properties.suitability_score > 70 ? '#00ff7f' : '#ff4500'
+            }),
+            filter: (feature) => {
+                return feature.properties.size_acres >= minArea && 
+                       feature.properties.disturbance_dist_km >= minDist;
             },
-            onEachFeature: function (f, layer) {
-                const p = f.properties;
-                const distText = p.dist_to_beach === Infinity ? 'Unknown' : p.dist_to_beach.toFixed(2) + ' km';
-                layer.bindPopup(`
-                    <div class="popup-title">${p.live_type} Zone</div>
-                    <div class="popup-detail"><b>Name:</b> ${p.live_name}</div>
-                    <div class="popup-detail"><b>Size:</b> ${p.live_size} Acres</div>
-                    <div class="popup-detail"><b>Distance to Beach:</b> ${distText}</div>
-                `);
-                
-                layer.on({
-                    mouseover: e => e.target.setStyle({ weight: 3, color: '#00ffcc', fillOpacity: 0.9 }),
-                    mouseout: e => geoJsonLayer.resetStyle(e.target)
-                });
+            onEachFeature: (feature, layer) => {
+                layer.on('click', () => showDetails(feature.properties));
             }
         }).addTo(map);
-
-        if (features.length > 0) {
-            map.fitBounds(geoJsonLayer.getBounds(), { padding: [20, 20], maxZoom: 14 });
-        }
-        
-        updateResultsList(features);
     }
 
-    function updateResultsList(features) {
-        document.getElementById('match-count').innerText = features.length;
-        const list = document.getElementById('results-list');
-        list.innerHTML = '';
-        
-        // Sort by closest to beach
-        const sorted = [...features].sort((a,b) => a.properties.dist_to_beach - b.properties.dist_to_beach);
-        const displayFeatures = sorted.slice(0, 100);
-
-        displayFeatures.forEach(f => {
-            const p = f.properties;
-            const distText = p.dist_to_beach === Infinity ? 'N/A' : p.dist_to_beach.toFixed(2) + ' km';
-            const card = document.createElement('div');
-            card.className = 'property-card';
-            card.style.borderLeftColor = colors[p.live_type] || colors['other'];
-            card.innerHTML = `
-                <h4>${p.live_type} - ${p.live_size} Ac</h4>
-                <p><b>Distance to Beach:</b> <span style="color:#00ffcc">${distText}</span></p>
-                <p>${p.live_name}</p>
-            `;
-            card.onclick = () => map.flyToBounds(L.geoJSON(f).getBounds(), { maxZoom: 16, duration: 1.5 });
-            list.appendChild(card);
-        });
+    function showDetails(p) {
+        document.getElementById('info-panel').style.display = 'block';
+        document.getElementById('plot-id').innerText = `Plot Sector: ${p.sector}`;
+        document.getElementById('plot-score').innerText = `Suitability: ${p.suitability_score}%`;
+        document.getElementById('plot-score').className = `suitability-badge ${p.suitability_score > 70 ? 'high' : 'low'}`;
+        document.getElementById('plot-area').innerText = p.size_acres;
+        document.getElementById('plot-price').innerText = p.guideline_price;
+        document.getElementById('plot-dist').innerText = p.disturbance_dist_km + ' km';
+        document.getElementById('plot-obstacle').innerText = `${p.disturbance_type} (${p.disturbance_dist_km} km)`;
     }
 
-    function applyFilters() {
-        if(allLiveFeatures.length === 0) return;
+    // Update listeners
+    document.getElementById('min-area').oninput = (e) => { document.getElementById('area-val').innerText = e.target.value; renderPlots(); };
+    document.getElementById('min-dist').oninput = (e) => { document.getElementById('dist-val').innerText = e.target.value; renderPlots(); };
 
-        const typeFilter = document.getElementById('filter-type').value;
-        const minSize = parseFloat(document.getElementById('filter-min-size').value) || 0;
-        const maxDist = parseFloat(document.getElementById('filter-max-dist').value) || 999;
-
-        const filtered = allLiveFeatures.filter(f => {
-            const p = f.properties;
-            const typeMatch = typeFilter === 'All' || p.live_type === typeFilter;
-            const sizeMatch = p.live_size >= minSize;
-            const distMatch = p.dist_to_beach <= maxDist;
-            return typeMatch && sizeMatch && distMatch;
-        });
-
-        renderMap(filtered);
-    }
 </script>
 </body>
 </html>
