@@ -1,0 +1,121 @@
+[
+    {
+        "name": "Pulicat",
+        "lat_min": 13.36,
+        "lon_min": 80.27,
+        "lat_max": 13.46,
+        "lon_max": 80.37
+    },
+    {
+        "name": "Chennai",
+        "lat_min": 13.03,
+        "lon_min": 80.22,
+        "lat_max": 13.13,
+        "lon_max": 80.32
+    },
+    {
+        "name": "Mahabalipuram",
+        "lat_min": 12.57,
+        "lon_min": 80.14,
+        "lat_max": 12.67,
+        "lon_max": 80.24
+    },
+    {
+        "name": "Marakkanam",
+        "lat_min": 12.15,
+        "lon_min": 79.9,
+        "lat_max": 12.25,
+        "lon_max": 80.0
+    },
+    {
+        "name": "Pondicherry",
+        "lat_min": 11.86,
+        "lon_min": 79.78,
+        "lat_max": 11.96,
+        "lon_max": 79.88
+    },
+    {
+        "name": "Cuddalore",
+        "lat_min": 11.7,
+        "lon_min": 79.72,
+        "lat_max": 11.8,
+        "lon_max": 79.82
+    },
+    {
+        "name": "Chidambaram",
+        "lat_min": 11.36,
+        "lon_min": 79.64,
+        "lat_max": 11.46,
+        "lon_max": 79.74
+    },
+    {
+        "name": "Sirkazhi",
+        "lat_min": 11.18,
+        "lon_min": 79.76,
+        "lat_max": 11.28,
+        "lon_max": 79.86
+    },
+    {
+        "name": "Nagapattinam",
+        "lat_min": 10.71,
+        "lon_min": 79.79,
+        "lat_max": 10.81,
+        "lon_max": 79.89
+    },
+    {
+        "name": "Vedaranyam",
+        "lat_min": 10.32,
+        "lon_min": 79.79,
+        "lat_max": 10.42,
+        "lon_max": 79.89
+    },
+    {
+        "name": "Adirampattinam",
+        "lat_min": 10.28,
+        "lon_min": 79.33,
+        "lat_max": 10.38,
+        "lon_max": 79.43
+    },
+    {
+        "name": "Ramanathapuram",
+        "lat_min": 9.31,
+        "lon_min": 78.78,
+        "lat_max": 9.41,
+        "lon_max": 78.88
+    },
+    {
+        "name": "Rameswaram",
+        "lat_min": 9.23,
+        "lon_min": 79.26,
+        "lat_max": 9.33,
+        "lon_max": 79.36
+    },
+    {
+        "name": "Kilakarai",
+        "lat_min": 9.18,
+        "lon_min": 78.73,
+        "lat_max": 9.28,
+        "lon_max": 78.83
+    },
+    {
+        "name": "Thoothukudi",
+        "lat_min": 8.76,
+        "lon_min": 78.09,
+        "lat_max": 8.86,
+        "lon_max": 78.19
+    },
+    {
+        "name": "Tiruchendur",
+        "lat_min": 8.44,
+        "lon_min": 78.07,
+        "lat_max": 8.54,
+        "lon_max": 78.17
+    },
+    {
+        "name": "Kanyakumari",
+        "lat_min": 8.03,
+        "lon_min": 77.49,
+        "lat_max": 8.13,
+        "lon_max": 77.59
+    }
+]
