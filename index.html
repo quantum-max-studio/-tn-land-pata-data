@@ -81,11 +81,11 @@
     </div>
 </div>
 
-<div class="overlay legend">
-    <span>Site Suitability Heatmap:</span>
-    <div class="gradient-bar"></div>
-    <span>(High Satisfaction in RED)</span>
-</div>
+    <div class="overlay legend">
+        <span>Suitability Heatmap:</span>
+        <div class="gradient-bar"></div>
+        <span>(Red = CRZ Compliant & Disturbance Free)</span>
+    </div>
 
 <div class="overlay info-panel interactive" id="info-panel">
     <h3 id="panel-title">Mega-Site Alpha</h3>
@@ -167,7 +167,6 @@
 
         const suggestions = [];
         for (const [name, plots] of Object.entries(sectors)) {
-            // Sort by suitability
             plots.sort((a, b) => b.suitability_score - a.suitability_score);
             
             let currentCluster = [];
@@ -177,7 +176,7 @@
             for (const p of plots) {
                 currentCluster.push(p);
                 currentArea += p.size_acres;
-                currentCost += (p.size_acres * parseFloat(p.guideline_price.replace(/[^\d.]/g, '')));
+                currentCost += (p.size_acres * p.guideline_price);
                 
                 if (currentArea >= target) {
                     suggestions.push({
