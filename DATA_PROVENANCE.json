@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-04-26T04:04:33.222Z",
+  "version": "4.1-production",
+  "total_records": 116,
+  "data_sources": {
+    "geographic_boundaries": "OpenStreetMap via Overpass API (overpass-api.de)",
+    "area_calculation": "Turf.js geodesic area computation (sq meters → acres)",
+    "guideline_values": "Tamil Nadu Registration Department (tnreginet.gov.in) — Zone-wise guideline values for 2024-25",
+    "suitability_scoring": "Composite score based on: Area (>50 acres), Obstacle Distance (>1km), CRZ compliance (0.5-2km from coast)",
+    "urban_exclusion": "Census 2011 population density + Google Maps urban boundary verification",
+    "coastline_distance": "Turf.js pointToLineDistance against OSM natural=coastline features",
+    "obstacle_mapping": "OSM tags: power=line, man_made=pipeline, waterway=river|canal, railway=rail"
+  },
+  "excluded_categories": [
+    "water",
+    "beach",
+    "coastline",
+    "residential",
+    "reservoir",
+    "forest",
+    "religious",
+    "aquaculture"
+  ],
+  "urban_zones_excluded": [
+    "Chennai City (12km radius)",
+    "Pondicherry Town (4km radius)",
+    "Cuddalore Town (3km radius)",
+    "Nagapattinam Town (2.5km radius)",
+    "Thoothukudi City (4km radius)",
+    "Kanyakumari Town (2km radius)",
+    "Nagercoil City (3km radius)",
+    "Rameswaram Town (1.5km radius)",
+    "Mahabalipuram Town (1.5km radius)"
+  ],
+  "disclaimer": "Guideline values are government minimums. Actual market price may be 1.5x to 3x higher depending on road access, proximity to SIPCOT zones, and water availability."
+}

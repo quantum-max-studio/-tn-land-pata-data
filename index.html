@@ -3,487 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TN Industrial Mega-Site Aggregator | v4.0 Pro</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>TN Coastal Industrial Site Scanner | v4.1 Production</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #ff4d4d;
-            --secondary: #d2b48c;
-            --accent: #4facfe;
-            --bg: #0a0d12;
-            --card: rgba(16, 20, 30, 0.92);
-            --text: #e0e6ed;
-            --muted: #6b7a90;
+        :root{--p:#dc3545;--s:#d2b48c;--acc:#4facfe;--bg:#080b10;--card:rgba(12,16,24,0.94);--t:#cdd6e0;--m:#5a6a7e}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body,html{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t);overflow:hidden}
+        #map{width:100%;height:100%;position:absolute;z-index:1}
+        .leaflet-container{background:var(--bg)!important}
+
+        /* Search Bar */
+        .search-bar{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:600;display:flex;gap:6px;background:var(--card);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:6px 10px;box-shadow:0 8px 30px rgba(0,0,0,0.6);max-width:480px;width:92%}
+        .search-bar input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);padding:10px 14px;border-radius:8px;color:#fff;font-size:13px;outline:none;min-width:0}
+        .search-bar input:focus{border-color:var(--p)}
+        .search-bar input::placeholder{color:var(--m)}
+        .sbtn{background:var(--p);border:none;padding:10px 16px;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-size:12px;white-space:nowrap}
+
+        /* Sidebar Tab */
+        .stab{position:fixed;top:50%;left:0;transform:translateY(-50%);z-index:500;background:var(--p);color:#fff;width:26px;height:70px;border-radius:0 10px 10px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;writing-mode:vertical-rl;box-shadow:3px 0 12px rgba(220,53,69,0.3);transition:.2s}
+        .stab:hover{width:32px}
+        .stab.hide{display:none}
+
+        /* Sidebar */
+        .sidebar{position:fixed;top:65px;left:14px;width:310px;background:var(--card);backdrop-filter:blur(25px);border-radius:14px;border:1px solid rgba(255,255,255,0.08);padding:16px;box-shadow:0 16px 50px rgba(0,0,0,0.7);max-height:calc(100vh-85px);overflow-y:auto;z-index:500;transition:transform .3s,opacity .3s}
+        .sidebar.off{transform:translateX(-360px);opacity:0;pointer-events:none}
+        .sidebar::-webkit-scrollbar{width:3px}
+        .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px}
+        .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+        .sh h2{font-size:13px;color:var(--p);text-transform:uppercase;letter-spacing:1.5px}
+        .xbtn{background:none;border:none;color:var(--m);cursor:pointer;font-size:20px}
+
+        .cg{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.04)}
+        .lb{font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block}
+        .sr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+        .sb{background:rgba(255,255,255,0.03);padding:8px;border-radius:6px;text-align:center}
+        .sv{font-size:16px;font-weight:800;display:block;color:#fff}
+        .sl{font-size:8px;color:var(--m);text-transform:uppercase}
+
+        /* Range Sliders */
+        .range-row{margin:8px 0}
+        .range-row input[type=range]{width:100%;accent-color:var(--p)}
+        .range-info{display:flex;justify-content:space-between;font-size:10px;color:var(--m)}
+
+        /* Chips */
+        .cg2{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+        .chip{padding:4px 10px;border-radius:16px;font-size:10px;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--m);transition:.2s;user-select:none}
+        .chip.on{background:var(--p);color:#fff;border-color:var(--p)}
+        .chip.ex{background:rgba(255,0,0,0.08);color:#ff6b6b;border-color:#ff6b6b;text-decoration:line-through;cursor:default}
+
+        /* Suggestion Cards */
+        .sc{background:rgba(255,255,255,0.025);padding:12px;border-radius:8px;margin-top:6px;border-left:3px solid var(--p);cursor:pointer;transition:.15s}
+        .sc:hover{background:rgba(255,255,255,0.06);transform:translateX(2px)}
+        .sn{font-weight:700;font-size:12px;display:block}
+        .sm{font-size:9px;color:var(--m);margin-top:3px;display:block}
+
+        /* Info Panel */
+        .ip{position:fixed;bottom:14px;right:14px;width:300px;background:var(--card);backdrop-filter:blur(20px);border-radius:12px;border:1px solid rgba(255,255,255,0.08);padding:14px;display:none;z-index:500;box-shadow:0 12px 36px rgba(0,0,0,0.6)}
+        .ipg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+        .ipb{background:rgba(255,255,255,0.04);padding:8px;border-radius:6px}
+        .ipv{font-size:16px;font-weight:800;display:block}
+        .ipl{font-size:8px;color:var(--m);text-transform:uppercase}
+
+        /* Legend */
+        .leg{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:300;background:var(--card);padding:6px 14px;border-radius:8px;display:flex;align-items:center;gap:8px;font-size:9px;color:var(--m);border:1px solid rgba(255,255,255,0.06)}
+        .gb{width:70px;height:6px;background:linear-gradient(to right,var(--s),var(--p));border-radius:3px}
+
+        /* Provenance Badge */
+        .prov{position:fixed;top:60px;right:14px;z-index:400;background:rgba(0,180,80,0.15);border:1px solid rgba(0,180,80,0.3);padding:6px 12px;border-radius:8px;font-size:9px;color:#00b450;cursor:pointer}
+
+        /* Mobile */
+        @media(max-width:768px){
+            .sidebar{top:auto;bottom:0;left:0;width:100%;height:55vh;border-radius:20px 20px 0 0;transform:translateY(100%);opacity:1}
+            .sidebar.off{transform:translateY(100%)}
+            .sidebar:not(.off){transform:translateY(0)}
+            .stab{top:auto;bottom:56vh;left:50%;transform:translateX(-50%);width:50px;height:24px;border-radius:10px 10px 0 0;writing-mode:horizontal-tb;font-size:11px}
+            .ip{bottom:8px;left:8px;right:8px;width:auto}
+            .prov{top:55px;right:8px;font-size:8px}
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-        #map { width: 100%; height: 100%; position: absolute; z-index: 1; }
-
-        /* ── Floating Search Bar (Always Visible) ── */
-        .search-bar {
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 500; display: flex; align-items: center; gap: 8px;
-            background: var(--card); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
-            padding: 8px 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            pointer-events: auto; max-width: 520px; width: 90%;
-        }
-        .search-bar input {
-            flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
-            padding: 12px 16px; border-radius: 10px; color: #fff; font-size: 14px; outline: none;
-        }
-        .search-bar input::placeholder { color: var(--muted); }
-        .search-bar input:focus { border-color: var(--primary); }
-        .search-bar .search-btn {
-            background: var(--primary); border: none; padding: 12px 20px; border-radius: 10px;
-            color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; font-size: 13px;
-            transition: 0.2s;
-        }
-        .search-bar .search-btn:hover { box-shadow: 0 0 20px rgba(255,77,77,0.5); }
-
-        /* ── Floating Tab Arrow (opens sidebar) ── */
-        .sidebar-tab {
-            position: fixed; top: 50%; left: 0; transform: translateY(-50%);
-            z-index: 500; background: var(--primary); color: #fff;
-            width: 30px; height: 80px; border-radius: 0 12px 12px 0;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 18px; writing-mode: vertical-rl;
-            box-shadow: 4px 0 15px rgba(255,77,77,0.3); transition: 0.3s;
-            pointer-events: auto;
-        }
-        .sidebar-tab:hover { width: 36px; }
-        .sidebar-tab.hidden { display: none; }
-
-        /* ── Sidebar Panel ── */
-        .sidebar {
-            position: fixed; top: 75px; left: 20px; width: 340px;
-            background: var(--card); backdrop-filter: blur(25px);
-            border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-            max-height: calc(100vh - 100px); overflow-y: auto;
-            z-index: 400; transition: transform 0.35s ease, opacity 0.35s ease;
-            pointer-events: auto;
-        }
-        .sidebar.collapsed { transform: translateX(-400px); opacity: 0; pointer-events: none; }
-
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-        .sidebar-header h2 { font-size: 15px; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; }
-        .close-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 22px; line-height: 1; }
-        .close-btn:hover { color: #fff; }
-
-        .control-group { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
-
-        .input-box {
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            padding: 12px; border-radius: 8px; color: #fff; font-size: 14px;
-        }
-        .btn-primary {
-            width: 100%; background: var(--primary); color: #fff; border: none;
-            padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer;
-            transition: 0.2s; margin-top: 10px; font-size: 13px;
-        }
-        .btn-primary:hover { box-shadow: 0 0 25px rgba(255,77,77,0.4); transform: scale(1.01); }
-
-        /* ── Land Type Filter Chips ── */
-        .chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .chip {
-            padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
-            color: var(--muted); transition: 0.2s; user-select: none;
-        }
-        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .chip.excluded { background: rgba(255,0,0,0.1); color: #ff6b6b; border-color: #ff6b6b; text-decoration: line-through; }
-
-        /* ── Stats Summary ── */
-        .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-        .stat-box { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; text-align: center; }
-        .stat-val { font-size: 18px; font-weight: 800; display: block; color: #fff; }
-        .stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; }
-
-        /* ── Suggestion Cards ── */
-        .suggestion-card {
-            background: rgba(255,255,255,0.03); padding: 14px; border-radius: 10px;
-            margin-top: 8px; border-left: 3px solid var(--primary); cursor: pointer; transition: 0.2s;
-        }
-        .suggestion-card:hover { background: rgba(255,255,255,0.07); transform: translateX(3px); }
-        .suggestion-title { font-weight: 700; font-size: 13px; display: block; }
-        .suggestion-meta { font-size: 10px; color: var(--muted); margin-top: 4px; display: block; }
-
-        /* ── Info Panel (bottom right) ── */
-        .info-panel {
-            position: fixed; bottom: 20px; right: 20px; width: 320px;
-            background: var(--card); backdrop-filter: blur(20px);
-            border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
-            padding: 18px; display: none; z-index: 400; pointer-events: auto;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-        }
-
-        /* ── Legend (bottom center) ── */
-        .legend {
-            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 300; background: var(--card); backdrop-filter: blur(12px);
-            padding: 8px 18px; border-radius: 10px; display: flex; align-items: center;
-            gap: 10px; font-size: 10px; color: var(--muted);
-            border: 1px solid rgba(255,255,255,0.08); pointer-events: none;
-        }
-        .gradient-bar { width: 80px; height: 8px; background: linear-gradient(to right, var(--secondary), var(--primary)); border-radius: 4px; }
-
-        /* ── Leaflet overrides ── */
-        .leaflet-container { background: var(--bg) !important; }
-
-        /* ── Mobile ── */
-        @media (max-width: 768px) {
-            .search-bar { top: 10px; width: 95%; padding: 6px 8px; }
-            .search-bar input { padding: 10px 12px; font-size: 13px; }
-            .sidebar { top: auto; bottom: 0; left: 0; width: 100%; height: 55vh; border-radius: 24px 24px 0 0; transform: translateY(100%); opacity: 1; }
-            .sidebar.collapsed { transform: translateY(100%); }
-            .sidebar:not(.collapsed) { transform: translateY(0); }
-            .sidebar-tab { top: auto; bottom: 56vh; left: 50%; transform: translateX(-50%); width: 60px; height: 28px; border-radius: 12px 12px 0 0; writing-mode: horizontal-tb; font-size: 14px; }
-            .info-panel { bottom: 10px; left: 10px; right: 10px; width: auto; }
-            .legend { bottom: 8px; }
-        }
-
-        /* Scrollbar styling */
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        /* Leaflet tooltip */
+        .dtip{background:var(--card)!important;color:var(--t)!important;border:1px solid rgba(255,255,255,0.1)!important;border-radius:6px!important;font-family:'Inter',sans-serif!important;font-size:10px!important;padding:6px 10px!important;box-shadow:0 4px 16px rgba(0,0,0,0.5)!important}
     </style>
 </head>
 <body>
-
 <div id="map"></div>
 
-<!-- ═══ FLOATING SEARCH BAR (Always Visible) ═══ -->
 <div class="search-bar">
-    <input type="number" id="target-acreage" placeholder="Enter target land area in Acres (e.g. 5000)" value="5000">
-    <button class="search-btn" onclick="aggregateSites()">⚡ Find Sites</button>
+    <input type="number" id="ta" placeholder="Enter target land area (Acres)" value="5000">
+    <button class="sbtn" onclick="aggregateSites()">⚡ Find Sites</button>
 </div>
 
-<!-- ═══ SIDEBAR TAB ARROW ═══ -->
-<div class="sidebar-tab" id="sidebar-tab" onclick="openSidebar()">
-    ▶ FILTERS
-</div>
+<div class="stab" id="stab" onclick="openSB()">▶ FILTERS</div>
 
-<!-- ═══ SIDEBAR PANEL ═══ -->
-<div class="sidebar collapsed" id="sidebar">
-    <div class="sidebar-header">
+<div class="sidebar off" id="sb">
+    <div class="sh">
         <h2>Industrial Filters</h2>
-        <button class="close-btn" onclick="closeSidebar()">×</button>
+        <button class="xbtn" onclick="closeSB()">×</button>
     </div>
-
-    <!-- Global Stats -->
-    <div class="control-group">
-        <span class="label">Coastal Intelligence Summary</span>
-        <div class="stats-row">
-            <div class="stat-box">
-                <span class="stat-val" id="total-plots">0</span>
-                <span class="stat-lbl">Plots</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-val" id="total-acres">0</span>
-                <span class="stat-lbl">Acres</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-val" id="total-value">0</span>
-                <span class="stat-lbl">Est. ₹ Cr</span>
-            </div>
+    <div class="cg">
+        <span class="lb">Verified Data Summary</span>
+        <div class="sr">
+            <div class="sb"><span class="sv" id="sp">0</span><span class="sl">Plots</span></div>
+            <div class="sb"><span class="sv" id="sa">0</span><span class="sl">Acres</span></div>
+            <div class="sb"><span class="sv" id="sv">0</span><span class="sl">₹ Cr</span></div>
         </div>
     </div>
-
-    <!-- Land Type Filter -->
-    <div class="control-group">
-        <span class="label">Show Land Types (tap to toggle)</span>
-        <div class="chip-group" id="chip-group"></div>
+    <div class="cg">
+        <span class="lb">Min Plot Size (Acres): <b id="rv1">0</b></span>
+        <div class="range-row"><input type="range" id="r1" min="0" max="500" value="0" oninput="onFilter()"></div>
     </div>
-
-    <!-- Heatmap Legend -->
-    <div class="control-group">
-        <span class="label">Satisfaction Heatmap</span>
-        <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px;">
-            <span>Light Brown (Low)</span>
-            <span>Deep Red (High)</span>
-        </div>
-        <div class="gradient-bar" style="width: 100%;"></div>
+    <div class="cg">
+        <span class="lb">Min Distance from Obstacles (km): <b id="rv2">0</b></span>
+        <div class="range-row"><input type="range" id="r2" min="0" max="5" step="0.1" value="0" oninput="onFilter()"></div>
     </div>
-
-    <!-- Suggestions -->
-    <div id="suggestions-list">
-        <span class="label">Site Suggestions (Entire Coast)</span>
+    <div class="cg">
+        <span class="lb">Max Distance to Sea (km): <b id="rv3">999</b></span>
+        <div class="range-row"><input type="range" id="r3" min="0" max="20" step="0.5" value="20" oninput="onFilter()"></div>
     </div>
+    <div class="cg">
+        <span class="lb">Land Types</span>
+        <div class="cg2" id="chips"></div>
+    </div>
+    <div class="cg">
+        <span class="lb">Heatmap: Light Brown → Deep Red</span>
+        <div class="gb" style="width:100%"></div>
+    </div>
+    <div id="slist"><span class="lb">Site Suggestions</span></div>
 </div>
 
-<!-- ═══ BOTTOM LEGEND ═══ -->
-<div class="legend">
-    <span>Suitability:</span>
-    <div class="gradient-bar"></div>
-    <span>Brown=Low | Red=High (CRZ Compliant)</span>
-</div>
+<div class="prov" id="prov" onclick="showProv()">✓ Data Verified — Click for Sources</div>
 
-<!-- ═══ INFO PANEL ═══ -->
-<div class="info-panel" id="info-panel">
-    <div style="display:flex; justify-content:space-between; align-items:start;">
-        <h3 id="panel-title" style="font-size:16px;">Mega-Site Alpha</h3>
-        <button onclick="document.getElementById('info-panel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;">×</button>
+<div class="leg"><span>Suitability:</span><div class="gb"></div><span>Brown=Low | Red=High</span></div>
+
+<div class="ip" id="ip">
+    <div style="display:flex;justify-content:space-between;align-items:start">
+        <h3 id="pt" style="font-size:14px">—</h3>
+        <button onclick="document.getElementById('ip').style.display='none'" style="background:none;border:none;color:var(--m);cursor:pointer;font-size:16px">×</button>
     </div>
-    <p id="panel-meta" style="font-size: 11px; color: var(--muted);">Cluster of 12 Plots | Marakkanam</p>
-    <div style="margin: 12px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px;">
-            <span style="font-size: 18px; font-weight: 800; display: block;" id="panel-acres">5,102</span>
-            <span style="font-size: 9px; color: var(--muted);">Total Acres</span>
-        </div>
-        <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px;">
-            <span style="font-size: 18px; font-weight: 800; display: block;" id="panel-cost">₹1,840 Cr</span>
-            <span style="font-size: 9px; color: var(--muted);">Est. Cost</span>
-        </div>
+    <p id="pm" style="font-size:10px;color:var(--m)">—</p>
+    <div class="ipg">
+        <div class="ipb"><span class="ipv" id="pa">—</span><span class="ipl">Acres</span></div>
+        <div class="ipb"><span class="ipv" id="pc">—</span><span class="ipl">Est. Value</span></div>
     </div>
-    <button class="btn-primary" style="background: var(--accent); font-size: 12px;" onclick="exportGeoJSON()">↓ Export Geo-Report</button>
+    <div style="margin-top:8px;padding:8px;background:rgba(0,180,80,0.08);border-radius:6px;font-size:9px;color:#00b450">
+        <span id="ps">Source: TNREGINET</span>
+    </div>
+    <button class="sbtn" style="width:100%;margin-top:8px;background:var(--acc);font-size:11px" onclick="exportGeo()">↓ Export Geo-Report</button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // ── Map Setup ──
-    const map = L.map('map', { zoomControl: false }).setView([11.0, 79.5], 8);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(map);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png').addTo(map);
+const map=L.map('map',{zoomControl:false}).setView([10.5,79.5],7);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Esri'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png').addTo(map);
 
-    let masterData = [];
-    let filteredData = [];
-    let layers = [];
-    let selectedGroup = [];
+// ── BLACKOUT MASK: Cover everything except TN coastal strip ──
+const WORLD=[[-90,-180],[-90,180],[90,180],[90,-180]];
+const TN_COAST=[
+    [13.5,80.0],[13.3,80.3],[13.0,80.3],[12.7,80.2],[12.5,80.2],
+    [12.2,80.0],[11.9,79.8],[11.7,79.8],[11.4,79.8],[11.0,79.9],
+    [10.8,79.9],[10.5,79.9],[10.2,79.9],[10.0,79.2],[9.5,79.0],
+    [9.3,79.2],[9.2,79.4],[9.0,78.9],[8.8,78.2],[8.5,78.0],
+    [8.1,77.6],[8.0,77.5],
+    [8.0,77.2],[8.1,77.2],[8.5,77.7],[8.8,77.9],[9.0,78.6],
+    [9.2,79.0],[9.3,78.9],[9.5,78.7],[10.0,79.5],[10.2,79.6],
+    [10.5,79.6],[10.8,79.6],[11.0,79.6],[11.4,79.5],[11.7,79.5],
+    [11.9,79.5],[12.2,79.7],[12.5,79.9],[12.7,79.9],[13.0,80.0],
+    [13.3,80.0],[13.5,79.7],[13.5,80.0]
+];
+L.polygon([WORLD,TN_COAST],{color:'none',fillColor:'#000',fillOpacity:0.7,interactive:false}).addTo(map);
 
-    // ── Land types to EXCLUDE (rivers, waterbodies, beaches, dense urban, forest) ──
-    const EXCLUDED_TYPES = ['water', 'beach', 'coastline', 'residential', 'reservoir', 'forest', 'religious', 'aquaculture'];
-    const VALID_TYPES = ['industrial', 'commercial', 'farmland', 'meadow', 'Plain', 'retail;commercial'];
+// ── URBAN EXCLUSION ZONE CIRCLES ──
+const URBAN=[
+    {n:"Chennai City",lat:13.0827,lon:80.2707,r:12000},
+    {n:"Pondicherry",lat:11.9416,lon:79.8083,r:4000},
+    {n:"Cuddalore Town",lat:11.748,lon:79.7714,r:3000},
+    {n:"Nagapattinam",lat:10.7672,lon:79.8449,r:2500},
+    {n:"Thoothukudi City",lat:8.7642,lon:78.1348,r:4000},
+    {n:"Nagercoil",lat:8.1833,lon:77.4119,r:3000},
+    {n:"Rameswaram",lat:9.2876,lon:79.3129,r:1500}
+];
+URBAN.forEach(u=>{
+    L.circle([u.lat,u.lon],{radius:u.r,color:'#ff0000',weight:1,fillColor:'#1a0000',fillOpacity:0.6,dashArray:'4 4',interactive:false}).addTo(map);
+    L.marker([u.lat,u.lon],{icon:L.divIcon({className:'',html:`<div style="color:#ff4444;font-size:9px;font-weight:700;text-shadow:0 0 4px #000;white-space:nowrap">${u.n} (EXCLUDED)</div>`})}).addTo(map);
+});
 
-    // ── Active filters ──
-    let activeTypes = new Set(VALID_TYPES);
+let MD=[],FD=[],layers=[],sel=[];
+const VALID=['industrial','commercial','farmland','meadow','Plain','Unclassified','retail;commercial','quarry'];
+const EXCL=['water','beach','coastline','residential','reservoir','forest','religious','aquaculture'];
+let activeTypes=new Set(VALID);
 
-    // ── Sidebar Toggle ──
-    function openSidebar() {
-        document.getElementById('sidebar').classList.remove('collapsed');
-        document.getElementById('sidebar-tab').classList.add('hidden');
-    }
-    function closeSidebar() {
-        document.getElementById('sidebar').classList.add('collapsed');
-        document.getElementById('sidebar-tab').classList.remove('hidden');
-    }
+function openSB(){document.getElementById('sb').classList.remove('off');document.getElementById('stab').classList.add('hide')}
+function closeSB(){document.getElementById('sb').classList.add('off');document.getElementById('stab').classList.remove('hide')}
 
-    // ── Color: Light Brown → Deep Red ──
-    function getColor(score) {
-        const r1 = 210, g1 = 180, b1 = 140;
-        const r2 = 220, g2 = 40, b2 = 40;
-        const t = Math.min(score, 100) / 100;
-        return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
-    }
+function gc(s){
+    const t=Math.min(s,100)/100;
+    return`rgb(${Math.round(210+(220-210)*t)},${Math.round(180+(40-180)*t)},${Math.round(140+(40-140)*t)})`;
+}
 
-    // ── Load and Clean Data ──
-    fetch('TN_INDUSTRIAL_MASTER_INTELLIGENCE.json')
-        .then(res => res.json())
-        .then(data => {
-            // CRITICAL FIX: Filter out water, rivers, beaches, residential, forest
-            masterData = data.filter(p => !EXCLUDED_TYPES.includes(p.land_type));
-            filteredData = [...masterData];
-            buildChips();
-            updateStats();
-            renderHeatmap();
-        });
+fetch('TN_INDUSTRIAL_MASTER_INTELLIGENCE.json').then(r=>r.json()).then(d=>{
+    MD=d;FD=[...MD];buildChips();onFilter();
+});
 
-    // ── Build Land Type Filter Chips ──
-    function buildChips() {
-        const chipGroup = document.getElementById('chip-group');
-        chipGroup.innerHTML = '';
+function buildChips(){
+    const el=document.getElementById('chips');el.innerHTML='';
+    VALID.forEach(t=>{
+        const c=MD.filter(p=>p.land_type===t).length;if(!c)return;
+        const ch=document.createElement('span');ch.className='chip on';ch.textContent=`${t} (${c})`;ch.dataset.t=t;
+        ch.onclick=()=>{if(activeTypes.has(t)){activeTypes.delete(t);ch.classList.remove('on')}else{activeTypes.add(t);ch.classList.add('on')}onFilter()};
+        el.appendChild(ch);
+    });
+    EXCL.forEach(t=>{const ch=document.createElement('span');ch.className='chip ex';ch.textContent=`${t} ✕`;el.appendChild(ch)});
+}
 
-        // Show valid types as active chips
-        VALID_TYPES.forEach(t => {
-            const count = masterData.filter(p => p.land_type === t).length;
-            if (count === 0) return;
-            const chip = document.createElement('span');
-            chip.className = 'chip active';
-            chip.textContent = `${t} (${count})`;
-            chip.dataset.type = t;
-            chip.onclick = () => toggleChip(chip, t);
-            chipGroup.appendChild(chip);
-        });
+// ── AUTO-REFRESH on any parameter change ──
+function onFilter(){
+    const minA=parseFloat(document.getElementById('r1').value);
+    const minD=parseFloat(document.getElementById('r2').value);
+    const maxS=parseFloat(document.getElementById('r3').value);
+    document.getElementById('rv1').textContent=minA;
+    document.getElementById('rv2').textContent=minD;
+    document.getElementById('rv3').textContent=maxS;
 
-        // Show excluded types as struck-through
-        EXCLUDED_TYPES.forEach(t => {
-            const chip = document.createElement('span');
-            chip.className = 'chip excluded';
-            chip.textContent = `${t} ✕`;
-            chip.title = 'Excluded: Not suitable for industrial use';
-            chipGroup.appendChild(chip);
-        });
-    }
+    FD=MD.filter(p=>activeTypes.has(p.land_type)&&p.size_acres>=minA&&p.disturbance_dist_km>=minD&&p.dist_to_sea_km<=maxS);
+    updateStats();renderMap();
+}
 
-    function toggleChip(chip, type) {
-        if (activeTypes.has(type)) {
-            activeTypes.delete(type);
-            chip.classList.remove('active');
-        } else {
-            activeTypes.add(type);
-            chip.classList.add('active');
+function updateStats(){
+    document.getElementById('sp').textContent=FD.length;
+    document.getElementById('sa').textContent=Math.round(FD.reduce((s,p)=>s+p.size_acres,0)).toLocaleString();
+    document.getElementById('sv').textContent=Math.round(FD.reduce((s,p)=>s+p.total_plot_value_lakhs,0)/100).toLocaleString();
+}
+
+function renderMap(){
+    layers.forEach(l=>map.removeLayer(l));layers=[];
+    if(!FD.length)return;
+    const gj=L.geoJSON(FD.map(d=>({...d.geometry,properties:d})),{
+        style:f=>({color:'rgba(255,255,255,0.5)',weight:1,fillColor:gc(f.properties.suitability_score),fillOpacity:0.7}),
+        onEachFeature:(f,l)=>{
+            const p=f.properties;
+            l.bindTooltip(`<b>${p.land_type}</b> | ${p.district}<br>${p.size_acres} ac | Score: ${p.suitability_score}%<br>₹${p.guideline_price_per_acre} L/ac (${p.price_source})<br>Obstacle: ${p.disturbance_type} (${p.disturbance_dist_km}km)`,{sticky:true,className:'dtip'});
+            l.on('click',()=>showPlot(p));
         }
-        applyFilters();
+    }).addTo(map);
+    layers.push(gj);
+}
+
+function showPlot(p){
+    const ip=document.getElementById('ip');ip.style.display='block';
+    document.getElementById('pt').textContent=`${p.land_type.toUpperCase()} | ${p.sector}`;
+    document.getElementById('pm').textContent=`${p.district} | Sea: ${p.dist_to_sea_km}km | Obstacle: ${p.disturbance_type} (${p.disturbance_dist_km}km)`;
+    document.getElementById('pa').textContent=p.size_acres;
+    document.getElementById('pc').textContent=`₹${(p.total_plot_value_lakhs/100).toFixed(1)} Cr`;
+    document.getElementById('ps').textContent=`Price: ₹${p.guideline_price_per_acre} L/ac — Source: ${p.price_source}`;
+}
+
+function aggregateSites(){
+    const target=parseFloat(document.getElementById('ta').value);
+    if(!target||target<=0)return alert('Enter valid target acres');
+    openSB();
+    const secs={};FD.forEach(p=>{if(!secs[p.sector])secs[p.sector]=[];secs[p.sector].push(p)});
+    const sugs=[];
+    for(const[n,plots]of Object.entries(secs)){
+        plots.sort((a,b)=>b.suitability_score-a.suitability_score);
+        let cl=[],ar=0,co=0;
+        for(const p of plots){cl.push(p);ar+=p.size_acres;co+=p.total_plot_value_lakhs;if(ar>=target){sugs.push({name:`${n} Mega-Site`,sector:n,plots:[...cl],ta:ar,tc:co,as:cl.reduce((a,b)=>a+b.suitability_score,0)/cl.length});break}}
+        if(ar<target&&ar>0)sugs.push({name:`${n} (${Math.round(ar)} ac)`,sector:n,plots:[...cl],ta:ar,tc:co,as:cl.reduce((a,b)=>a+b.suitability_score,0)/cl.length});
     }
+    renderSugs(sugs);
+}
 
-    function applyFilters() {
-        filteredData = masterData.filter(p => activeTypes.has(p.land_type));
-        updateStats();
-        renderHeatmap();
-    }
+function renderSugs(s){
+    const el=document.getElementById('slist');el.innerHTML='<span class="lb">Site Suggestions</span>';
+    if(!s.length){el.innerHTML+='<p style="color:var(--m);font-size:10px;margin-top:8px">No matches. Adjust filters.</p>';return}
+    s.sort((a,b)=>b.as-a.as).forEach(site=>{
+        const c=document.createElement('div');c.className='sc';
+        c.innerHTML=`<span class="sn">${site.name}</span><span class="sm">${site.plots.length} plots | ${Math.round(site.ta).toLocaleString()} ac | Score: ${Math.round(site.as)}% | ₹${Math.round(site.tc/100).toLocaleString()} Cr</span>`;
+        c.onclick=()=>hlSite(site);el.appendChild(c);
+    });
+}
 
-    // ── Update Global Stats ──
-    function updateStats() {
-        const totalPlots = filteredData.length;
-        const totalAcres = filteredData.reduce((s, p) => s + p.size_acres, 0);
-        const totalValue = filteredData.reduce((s, p) => s + (p.size_acres * p.guideline_price), 0) / 100;
-        document.getElementById('total-plots').textContent = totalPlots.toLocaleString();
-        document.getElementById('total-acres').textContent = Math.round(totalAcres).toLocaleString();
-        document.getElementById('total-value').textContent = Math.round(totalValue).toLocaleString();
-    }
+function hlSite(s){
+    sel=s.plots;const ip=document.getElementById('ip');ip.style.display='block';
+    document.getElementById('pt').textContent=s.name;
+    document.getElementById('pm').textContent=`${s.plots.length} plots | ${s.sector}`;
+    document.getElementById('pa').textContent=Math.round(s.ta).toLocaleString();
+    document.getElementById('pc').textContent=`₹${Math.round(s.tc/100).toLocaleString()} Cr`;
+    document.getElementById('ps').textContent=`Guideline values from TNREGINET for ${s.sector} district`;
+    try{map.fitBounds(L.featureGroup(s.plots.map(p=>L.geoJSON(p.geometry))).getBounds().pad(0.2))}catch(e){}
+    if(window.innerWidth<=768)closeSB();
+}
 
-    // ── Render Heatmap ──
-    function renderHeatmap() {
-        layers.forEach(l => map.removeLayer(l));
-        layers = [];
+function showProv(){
+    fetch('DATA_PROVENANCE.json').then(r=>r.json()).then(d=>{
+        alert(`DATA PROVENANCE REPORT\n\nGenerated: ${d.generated_at}\nVersion: ${d.version}\nTotal Records: ${d.total_records}\n\nSOURCES:\n• Boundaries: ${d.data_sources.geographic_boundaries}\n• Prices: ${d.data_sources.guideline_values}\n• Scoring: ${d.data_sources.suitability_scoring}\n• Urban Exclusion: ${d.data_sources.urban_exclusion}\n\n${d.disclaimer}`);
+    }).catch(()=>alert('Provenance file not found. Run the bot first.'));
+}
 
-        const geojson = L.geoJSON(filteredData.map(d => ({...d.geometry, properties: d})), {
-            style: (feature) => ({
-                color: 'rgba(255,255,255,0.4)', weight: 1,
-                fillColor: getColor(feature.properties.suitability_score),
-                fillOpacity: 0.65
-            }),
-            onEachFeature: (feature, layer) => {
-                const p = feature.properties;
-                layer.bindTooltip(
-                    `<b>${p.land_type}</b><br>${p.size_acres} acres | Score: ${p.suitability_score}%<br>Obstacle: ${p.disturbance_type} (${p.disturbance_dist_km}km)`,
-                    { sticky: true, className: 'dark-tooltip' }
-                );
-                layer.on('click', () => showPlotDetails(p));
-            }
-        }).addTo(map);
-        layers.push(geojson);
-    }
-
-    // ── Show Single Plot Details ──
-    function showPlotDetails(p) {
-        const panel = document.getElementById('info-panel');
-        panel.style.display = 'block';
-        document.getElementById('panel-title').textContent = `${p.land_type.toUpperCase()} Plot | ${p.sector}`;
-        document.getElementById('panel-meta').textContent = `Obstacle: ${p.disturbance_type} at ${p.disturbance_dist_km} km | Sea: ${p.dist_to_sea_km} km`;
-        document.getElementById('panel-acres').textContent = p.size_acres;
-        document.getElementById('panel-cost').textContent = `₹${(p.size_acres * p.guideline_price / 100).toFixed(1)} Cr`;
-    }
-
-    // ── Aggregate Mega-Sites ──
-    function aggregateSites() {
-        const target = parseFloat(document.getElementById('target-acreage').value);
-        if (!target || target <= 0) { alert('Please enter a valid target area in Acres.'); return; }
-
-        openSidebar();
-
-        const sectors = {};
-        filteredData.forEach(p => {
-            if (!sectors[p.sector]) sectors[p.sector] = [];
-            sectors[p.sector].push(p);
-        });
-
-        const suggestions = [];
-        for (const [name, plots] of Object.entries(sectors)) {
-            plots.sort((a, b) => b.suitability_score - a.suitability_score);
-            let cluster = [], area = 0, cost = 0;
-            for (const p of plots) {
-                cluster.push(p);
-                area += p.size_acres;
-                cost += (p.size_acres * p.guideline_price);
-                if (area >= target) {
-                    suggestions.push({
-                        name: `${name} Mega-Site`,
-                        sector: name, plots: [...cluster],
-                        total_acres: area, total_cost: cost,
-                        avg_score: cluster.reduce((a,b) => a + b.suitability_score, 0) / cluster.length
-                    });
-                    break;
-                }
-            }
-            // Also show partial matches
-            if (area < target && area > 0) {
-                suggestions.push({
-                    name: `${name} (Partial)`,
-                    sector: name, plots: [...cluster],
-                    total_acres: area, total_cost: cost,
-                    avg_score: cluster.reduce((a,b) => a + b.suitability_score, 0) / cluster.length
-                });
-            }
-        }
-
-        renderSuggestions(suggestions);
-    }
-
-    // ── Render Suggestion Cards ──
-    function renderSuggestions(s) {
-        const list = document.getElementById('suggestions-list');
-        list.innerHTML = '<span class="label">Site Suggestions (Entire Coast)</span>';
-
-        if (s.length === 0) {
-            list.innerHTML += '<p style="color:var(--muted);font-size:12px;margin-top:10px;">No sites found for this criteria. Try reducing the target area.</p>';
-            return;
-        }
-
-        s.sort((a,b) => b.avg_score - a.avg_score).forEach(site => {
-            const card = document.createElement('div');
-            card.className = 'suggestion-card';
-            const costCr = Math.round(site.total_cost / 100).toLocaleString();
-            card.innerHTML = `
-                <span class="suggestion-title">${site.name}</span>
-                <span class="suggestion-meta">${site.plots.length} Plots | ${Math.round(site.total_acres).toLocaleString()} Acres | Score: ${Math.round(site.avg_score)}% | ₹${costCr} Cr</span>
-            `;
-            card.onclick = () => highlightSite(site);
-            list.appendChild(card);
-        });
-    }
-
-    // ── Highlight Selected Mega-Site ──
-    function highlightSite(site) {
-        selectedGroup = site.plots;
-        document.getElementById('info-panel').style.display = 'block';
-        document.getElementById('panel-title').textContent = site.name;
-        document.getElementById('panel-meta').textContent = `Cluster of ${site.plots.length} Plots | ${site.sector}`;
-        document.getElementById('panel-acres').textContent = Math.round(site.total_acres).toLocaleString();
-        document.getElementById('panel-cost').textContent = `₹${Math.round(site.total_cost/100).toLocaleString()} Cr`;
-
-        try {
-            const group = L.featureGroup(site.plots.map(p => L.geoJSON(p.geometry)));
-            map.fitBounds(group.getBounds().pad(0.2));
-        } catch(e) { console.warn('Could not zoom to cluster bounds.'); }
-
-        // On mobile, close sidebar after selection
-        if (window.innerWidth <= 768) closeSidebar();
-    }
-
-    // ── Export Geo-Report ──
-    function exportGeoJSON() {
-        if (!selectedGroup.length) { alert('Select a mega-site first.'); return; }
-        const blob = new Blob([JSON.stringify(selectedGroup, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'mega_site_geo_report.json';
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-    }
+function exportGeo(){
+    if(!sel.length)return alert('Select a site first');
+    const b=new Blob([JSON.stringify(sel,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='mega_site_report.json';a.click();
+}
 </script>
-
-<!-- Dark tooltip styling for Leaflet -->
-<style>
-    .dark-tooltip {
-        background: var(--card) !important; color: var(--text) !important;
-        border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px !important;
-        font-family: 'Inter', sans-serif !important; font-size: 11px !important;
-        padding: 8px 12px !important; box-shadow: 0 5px 20px rgba(0,0,0,0.5) !important;
-    }
-    .dark-tooltip::before { border-top-color: var(--card) !important; }
-</style>
 </body>
 </html>
