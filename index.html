@@ -90,35 +90,44 @@
 <div id="map"></div>
 
 <div class="search-bar">
-    <input type="number" id="ta" placeholder="Enter target land area (Acres)" value="5000">
-    <button class="sbtn" onclick="aggregateSites()">⚡ Find Sites</button>
+    <div style="display:flex; align-items:center; color:var(--m); font-size:20px; padding-left:5px;">🏭</div>
+    <input type="number" id="ta" placeholder="How many acres do you need? (e.g. 5000)" value="5000">
+    <button class="sbtn" onclick="aggregateSites()">🔎 Find Best Land</button>
 </div>
 
 <div class="stab" id="stab" onclick="openSB()">▶ FILTERS</div>
 
 <div class="sidebar off" id="sb">
     <div class="sh">
-        <h2>Industrial Filters</h2>
+        <h2>👋 Welcome to TN Land Finder!</h2>
         <button class="xbtn" onclick="closeSB()">×</button>
     </div>
+    
+    <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:15px; font-size:11px; color:#cdd6e0; line-height:1.5;">
+        <b>How to use:</b><br>
+        1. Type how many acres you need in the top bar.<br>
+        2. Click <b>"Find Best Land"</b> to see top suggestions.<br>
+        3. Or, simply <b>click anywhere on the map</b> and we will automatically grab nearby land for you!
+    </div>
+
     <div class="cg">
-        <span class="lb">Verified Data Summary</span>
+        <span class="lb">Total Verified Land Available</span>
         <div class="sr">
             <div class="sb"><span class="sv" id="sp">0</span><span class="sl">Plots</span></div>
             <div class="sb"><span class="sv" id="sa">0</span><span class="sl">Acres</span></div>
-            <div class="sb"><span class="sv" id="sv">0</span><span class="sl">₹ Cr</span></div>
+            <div class="sb"><span class="sv" id="sv">0</span><span class="sl">₹ Cr Value</span></div>
         </div>
     </div>
     <div class="cg">
-        <span class="lb">Min Plot Size (Acres): <b id="rv1">0</b></span>
+        <span class="lb">Only show plots larger than (Acres): <b id="rv1">0</b></span>
         <div class="range-row"><input type="range" id="r1" min="0" max="500" value="0" oninput="onFilter()"></div>
     </div>
     <div class="cg">
-        <span class="lb">Min Distance from Obstacles (km): <b id="rv2">0</b></span>
+        <span class="lb">Must be this far from pipes/wires (km): <b id="rv2">0</b></span>
         <div class="range-row"><input type="range" id="r2" min="0" max="5" step="0.1" value="0" oninput="onFilter()"></div>
     </div>
     <div class="cg">
-        <span class="lb">Max Distance to Sea (km): <b id="rv3">999</b></span>
+        <span class="lb">Must be this close to the sea (km): <b id="rv3">999</b></span>
         <div class="range-row"><input type="range" id="r3" min="0" max="20" step="0.5" value="20" oninput="onFilter()"></div>
     </div>
     <div class="cg">
@@ -126,35 +135,42 @@
         <div class="cg2" id="chips"></div>
     </div>
     <div class="cg">
-        <span class="lb">Heatmap: Light Brown → Deep Red</span>
+        <span class="lb">Land Colors (Red is best!)</span>
+        <div style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 4px; color:var(--m)">
+            <span>Light Brown (Okay)</span>
+            <span>Deep Red (Perfect)</span>
+        </div>
         <div class="gb" style="width:100%"></div>
     </div>
-    <div id="slist"><span class="lb">Site Suggestions</span></div>
+    <div id="slist"><span class="lb">Ready-Made Mega Sites</span></div>
 </div>
 
-<div class="prov" id="prov" onclick="showProv()">✓ Data Verified — Click for Sources</div>
+<div class="prov" id="prov" onclick="showProv()">✓ Real Government Data (Click to see)</div>
 
-<div class="leg"><span>Suitability:</span><div class="gb"></div><span>Brown=Low | Red=High</span></div>
+<div class="leg"><span>Land Quality:</span><div class="gb"></div><span>Brown = Okay | Red = Perfect</span></div>
 
 <div class="ip" id="ip">
     <div style="display:flex;justify-content:space-between;align-items:start">
-        <h3 id="pt" style="font-size:14px">—</h3>
-        <button onclick="document.getElementById('ip').style.display='none'; resetHighlight();" style="background:none;border:none;color:var(--m);cursor:pointer;font-size:16px">×</button>
+        <h3 id="pt" style="font-size:16px; color:#fff">Selected Land</h3>
+        <button onclick="document.getElementById('ip').style.display='none'; resetHighlight();" style="background:none;border:none;color:var(--m);cursor:pointer;font-size:20px">×</button>
     </div>
-    <p id="pm" style="font-size:10px;color:var(--m)">—</p>
+    <p id="pm" style="font-size:11px;color:var(--m);margin-bottom:12px;">Click the big blue button below to grab nearby land automatically!</p>
+    
     <div class="ipg">
-        <div class="ipb"><span class="ipv" id="pa">—</span><span class="ipl">Acres</span></div>
-        <div class="ipb" title="Outright Purchase"><span class="ipv" id="pc">—</span><span class="ipl">Full Buy</span></div>
+        <div class="ipb" style="background:rgba(255,255,255,0.08)"><span class="ipv" id="pa" style="color:var(--acc)">—</span><span class="ipl">Total Acres</span></div>
+        <div class="ipb" title="Outright Purchase Cost"><span class="ipv" id="pc">—</span><span class="ipl">Buy Forever Cost</span></div>
     </div>
     <div class="ipg" style="margin-top:0">
-        <div class="ipb" title="SIPCOT 99-Year Lease Premium"><span class="ipv" id="p_lease">—</span><span class="ipl">99-Yr Lease</span></div>
-        <div class="ipb" title="Annual Rental (1-Year)"><span class="ipv" id="p_rent">—</span><span class="ipl">1-Yr Rent</span></div>
+        <div class="ipb" title="SIPCOT 99-Year Lease Premium"><span class="ipv" id="p_lease">—</span><span class="ipl">99-Year Lease</span></div>
+        <div class="ipb" title="Annual Rental (1-Year)"><span class="ipv" id="p_rent">—</span><span class="ipl">1-Year Rent</span></div>
     </div>
-    <div style="margin-top:8px;padding:8px;background:rgba(0,180,80,0.08);border-radius:6px;font-size:9px;color:#00b450">
-        <span id="ps">Source: TNREGINET / SIPCOT</span>
+
+    <div style="margin-top:8px;padding:8px;background:rgba(0,180,80,0.08);border-radius:6px;font-size:10px;color:#00b450; display:flex; align-items:center; gap:5px;">
+        <span>✅</span> <span id="ps">Prices verified via TNREGINET</span>
     </div>
-    <button class="sbtn" style="width:100%;margin-top:8px;background:var(--p);font-size:11px" onclick="growSiteFromCurrent()">🎯 Auto-Select Surrounding Plots</button>
-    <button class="sbtn" style="width:100%;margin-top:4px;background:var(--acc);font-size:11px" onclick="exportGeo()">↓ Export Geo-Report</button>
+    
+    <button class="sbtn" style="width:100%;margin-top:12px;background:var(--acc);font-size:13px;padding:12px;" onclick="growSiteFromCurrent()">🚀 Build Factory Here! (Grab nearby land)</button>
+    <button class="sbtn" style="width:100%;margin-top:6px;background:rgba(255,255,255,0.1);font-size:11px;color:#fff;" onclick="exportGeo()">📥 Download Map File</button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -262,7 +278,8 @@ function renderMap(){
         style:f=>({color:'rgba(255,255,255,0.5)',weight:1,fillColor:gc(f.properties.suitability_score),fillOpacity:0.7}),
         onEachFeature:(f,l)=>{
             const p=f.properties;
-            l.bindTooltip(`<b>${p.land_type}</b> | ${p.district}<br>${p.size_acres} ac | Score: ${p.suitability_score}%<br>₹${p.guideline_price_per_acre} L/ac (${p.price_source})<br>Obstacle: ${p.disturbance_type} (${p.disturbance_dist_km}km)`,{sticky:true,className:'dtip'});
+            let rating = p.suitability_score > 60 ? "🌟 Perfect" : (p.suitability_score > 30 ? "👍 Good" : "⚠️ Okay");
+            l.bindTooltip(`<div style="text-align:center"><b>${rating} Land</b><br><span style="font-size:14px;color:var(--acc)">${p.size_acres} Acres</span><br>District: ${p.district}<br>Click to build here!</div>`,{sticky:true,className:'dtip'});
             l.on('click',()=>showPlot(p));
         }
     }).addTo(map);
@@ -280,15 +297,15 @@ function showPlot(p){
     const rent = pur * 0.05;  // 1 year rent is approx 5%
 
     const ip=document.getElementById('ip');ip.style.display='block';
-    document.getElementById('pt').textContent=`${p.land_type.toUpperCase()} | ${p.sector}`;
-    document.getElementById('pm').textContent=`${p.district} | Sea: ${p.dist_to_sea_km}km | Obstacle: ${p.disturbance_type} (${p.disturbance_dist_km}km)`;
+    document.getElementById('pt').textContent=`📍 1 Plot Selected`;
+    document.getElementById('pm').textContent=`It's in ${p.district} and is currently ${p.size_acres} acres. Need more? Click the blue button below!`;
     document.getElementById('pa').textContent=p.size_acres;
     
     document.getElementById('pc').textContent=`₹${(pur/100).toFixed(2)} Cr`;
     document.getElementById('p_lease').textContent=`₹${(lease/100).toFixed(2)} Cr`;
-    document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr/yr`;
+    document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr`;
     
-    document.getElementById('ps').textContent=`Purchase: ₹${p.guideline_price_per_acre} L/ac — Source: ${p.price_source}`;
+    document.getElementById('ps').textContent=`Official Price: ₹${p.guideline_price_per_acre} Lakhs/acre`;
     
     // Optional: Highlighting single plot in a distinct color to show it's selected
     highlightLayer = L.geoJSON(p.geometry, {
@@ -333,39 +350,39 @@ function growSiteFromCurrent() {
     const lease = purCost * 0.65;
     const rent = purCost * 0.05;
 
-    document.getElementById('pt').textContent=`AGGREGATED CLUSTER (${cluster.length} plots)`;
+    document.getElementById('pt').textContent=`🎉 MEGA-SITE CREATED!`;
     const maxDist = cluster[cluster.length-1].distToSeed;
-    document.getElementById('pm').textContent=`Radius: ${maxDist.toFixed(2)} km | Around ${currentPlot.district}`;
+    document.getElementById('pm').textContent=`We found ${cluster.length} plots within ${maxDist.toFixed(1)} km around your click to reach your target!`;
     document.getElementById('pa').textContent=Math.round(area).toLocaleString();
     document.getElementById('pc').textContent=`₹${(purCost/100).toFixed(2)} Cr`;
     document.getElementById('p_lease').textContent=`₹${(lease/100).toFixed(2)} Cr`;
-    document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr/yr`;
-    document.getElementById('ps').textContent=`Cost dynamically aggregated based on TNREGINET prices`;
+    document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr`;
+    document.getElementById('ps').textContent=`Combined prices based on Govt data`;
     
     sel = cluster;
 }
 
 function aggregateSites(){
     const target=parseFloat(document.getElementById('ta').value);
-    if(!target||target<=0)return alert('Enter valid target acres');
+    if(!target||target<=0)return alert('Please type how many acres you need in the search bar!');
     openSB();
     const secs={};FD.forEach(p=>{if(!secs[p.sector])secs[p.sector]=[];secs[p.sector].push(p)});
     const sugs=[];
     for(const[n,plots]of Object.entries(secs)){
         plots.sort((a,b)=>b.suitability_score-a.suitability_score);
         let cl=[],ar=0,co=0;
-        for(const p of plots){cl.push(p);ar+=p.size_acres;co+=p.total_plot_value_lakhs;if(ar>=target){sugs.push({name:`${n} Mega-Site`,sector:n,plots:[...cl],ta:ar,tc:co,as:cl.reduce((a,b)=>a+b.suitability_score,0)/cl.length});break}}
-        if(ar<target&&ar>0)sugs.push({name:`${n} (${Math.round(ar)} ac)`,sector:n,plots:[...cl],ta:ar,tc:co,as:cl.reduce((a,b)=>a+b.suitability_score,0)/cl.length});
+        for(const p of plots){cl.push(p);ar+=p.size_acres;co+=p.total_plot_value_lakhs;if(ar>=target){sugs.push({name:`${n} Factory Site`,sector:n,plots:[...cl],ta:ar,tc:co,as:cl.reduce((a,b)=>a+b.suitability_score,0)/cl.length});break}}
+        if(ar<target&&ar>0)sugs.push({name:`${n} (Only ${Math.round(ar)} ac available)`,sector:n,plots:[...cl],ta:ar,tc:co,as:cl.reduce((a,b)=>a+b.suitability_score,0)/cl.length});
     }
     renderSugs(sugs);
 }
 
 function renderSugs(s){
-    const el=document.getElementById('slist');el.innerHTML='<span class="lb">Site Suggestions</span>';
-    if(!s.length){el.innerHTML+='<p style="color:var(--m);font-size:10px;margin-top:8px">No matches. Adjust filters.</p>';return}
+    const el=document.getElementById('slist');el.innerHTML='<span class="lb">Ready-Made Mega Sites</span>';
+    if(!s.length){el.innerHTML+='<p style="color:var(--m);font-size:12px;margin-top:8px">No land found. Try asking for fewer acres or removing some filters.</p>';return}
     s.sort((a,b)=>b.as-a.as).forEach(site=>{
         const c=document.createElement('div');c.className='sc';
-        c.innerHTML=`<span class="sn">${site.name}</span><span class="sm">${site.plots.length} plots | ${Math.round(site.ta).toLocaleString()} ac | Score: ${Math.round(site.as)}% | ₹${Math.round(site.tc/100).toLocaleString()} Cr</span>`;
+        c.innerHTML=`<span class="sn">🏭 ${site.name}</span><span class="sm">${site.plots.length} pieces of land | ${Math.round(site.ta).toLocaleString()} Total Acres<br>Full Buy: ₹${Math.round(site.tc/100).toLocaleString()} Cr</span>`;
         c.onclick=()=>hlSite(site);el.appendChild(c);
     });
 }
@@ -377,15 +394,15 @@ function hlSite(s){
     const lease = pur * 0.65;
     const rent = pur * 0.05;
 
-    document.getElementById('pt').textContent=s.name;
-    document.getElementById('pm').textContent=`${s.plots.length} plots | ${s.sector}`;
+    document.getElementById('pt').textContent=`🎉 ${s.name} SELECTED!`;
+    document.getElementById('pm').textContent=`This site combines ${s.plots.length} pieces of land perfectly suited for your factory in ${s.sector}.`;
     document.getElementById('pa').textContent=Math.round(s.ta).toLocaleString();
     
     document.getElementById('pc').textContent=`₹${(pur/100).toFixed(2)} Cr`;
     document.getElementById('p_lease').textContent=`₹${(lease/100).toFixed(2)} Cr`;
-    document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr/yr`;
+    document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr`;
 
-    document.getElementById('ps').textContent=`Guideline values from TNREGINET for ${s.sector} district`;
+    document.getElementById('ps').textContent=`Combined prices based on Govt data`;
     
     resetHighlight();
     try{
