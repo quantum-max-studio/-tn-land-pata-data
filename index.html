@@ -202,6 +202,10 @@ let currentPlot = null;
 let highlightLayer = null;
 const SELECT_COLORS = ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff8000', '#ff0000', '#8000ff'];
 
+const VALID=['industrial','commercial','farmland','meadow','Plain','Unclassified','retail;commercial','quarry'];
+const EXCL=['water','beach','coastline','residential','reservoir','forest','religious','aquaculture'];
+let activeTypes=new Set(VALID);
+
 function getDist(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2-lat1)*Math.PI/180;
