@@ -197,11 +197,10 @@ URBAN.forEach(u=>{
 });
 
 let MD=[],FD=[],layers=[],sel=[];
+let basket = new Set();
 let currentPlot = null;
 let highlightLayer = null;
-const VALID=['industrial','commercial','farmland','meadow','Plain','Unclassified','retail;commercial','quarry'];
-const EXCL=['water','beach','coastline','residential','reservoir','forest','religious','aquaculture'];
-let activeTypes=new Set(VALID);
+const SELECT_COLORS = ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff8000', '#ff0000', '#8000ff'];
 
 function getDist(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -224,7 +223,10 @@ function gc(s){
 }
 
 fetch('TN_INDUSTRIAL_MASTER_INTELLIGENCE.json').then(r=>r.json()).then(d=>{
-    MD=d;FD=[...MD];buildChips();onFilter();
+    // Assign IDs A-1, A-2...
+    MD=d.map((p, i) => ({...p, id: `A-${i+1}`}));
+    FD=[...MD];
+    buildChips();onFilter();
 });
 
 function buildChips(){
@@ -281,42 +283,64 @@ function renderMap(){
     layers.forEach(l=>map.removeLayer(l));layers=[];
     if(!FD.length)return;
     const gj=L.geoJSON(FD.map(d=>({...d.geometry,properties:d})),{
-        style:f=>({color:'#ffffff',weight:2,fillColor:gc(f.properties.suitability_score),fillOpacity:0.8}),
+        style:f=>{
+            const p = f.properties;
+            if (basket.has(p.id)) {
+                const colorIdx = Array.from(basket).indexOf(p.id) % SELECT_COLORS.length;
+                return {color: SELECT_COLORS[colorIdx], weight: 4, fillColor: SELECT_COLORS[colorIdx], fillOpacity: 0.6};
+            }
+            return {color:'#ffffff',weight:2,fillColor:gc(p.suitability_score),fillOpacity:0.8};
+        },
         onEachFeature:(f,l)=>{
             const p=f.properties;
             let rating = p.suitability_score > 60 ? "🌟 Perfect" : (p.suitability_score > 30 ? "👍 Good" : "⚠️ Okay");
-            l.bindTooltip(`<div style="text-align:center"><b>${rating} Land</b><br><span style="font-size:14px;color:var(--acc)">${p.size_acres} Acres</span><br>District: ${p.district}<br>Click to build here!</div>`,{sticky:true,className:'dtip'});
-            l.on('click',()=>showPlot(p));
+            l.bindTooltip(`<div style="text-align:center"><b>Plot ${p.id}</b><br>${rating} Land<br><span style="font-size:14px;color:var(--acc)">${p.size_acres} Acres</span><br>District: ${p.district}<br>Click to Select</div>`,{sticky:true,className:'dtip'});
+            l.on('click',()=>toggleSelection(p));
         }
     }).addTo(map);
     layers.push(gj);
 }
 
-function showPlot(p){
+function toggleSelection(p) {
+    if (basket.has(p.id)) basket.delete(p.id);
+    else basket.add(p.id);
+    
     currentPlot = p;
-    sel = [p];
-    resetHighlight();
-    
-    // Calculate prices
-    const pur = p.total_plot_value_lakhs;
-    const lease = pur * 0.65; // SIPCOT 99yr premium is approx 65% of market value
-    const rent = pur * 0.05;  // 1 year rent is approx 5%
+    updateBasketUI();
+    renderMap();
+}
 
-    const ip=document.getElementById('ip');ip.style.display='block';
-    document.getElementById('pt').textContent=`📍 1 Plot Selected`;
-    document.getElementById('pm').textContent=`It's in ${p.district} and is currently ${p.size_acres} acres. Need more? Click the blue button below!`;
-    document.getElementById('pa').textContent=p.size_acres;
+function updateBasketUI() {
+    const selectedPlots = MD.filter(p => basket.has(p.id));
+    const ip=document.getElementById('ip');
     
-    document.getElementById('pc').textContent=`₹${(pur/100).toFixed(2)} Cr`;
+    if (selectedPlots.length === 0) {
+        ip.style.display = 'none';
+        return;
+    }
+    
+    ip.style.display='block';
+    const totalAcre = selectedPlots.reduce((s,p) => s + p.size_acres, 0);
+    const totalPur = selectedPlots.reduce((s,p) => s + p.total_plot_value_lakhs, 0);
+    const lease = totalPur * 0.65;
+    const rent = totalPur * 0.05;
+
+    if (selectedPlots.length === 1) {
+        const p = selectedPlots[0];
+        document.getElementById('pt').textContent=`📍 Plot ${p.id} Selected`;
+        document.getElementById('pm').textContent=`Sector: ${p.sector} | ${p.district}. Bot Data: Coast: ${p.dist_to_sea_km}km | Obstacle: ${p.disturbance_type} (${p.disturbance_dist_km}km)`;
+    } else {
+        document.getElementById('pt').textContent=`🧺 ${selectedPlots.length} Plots Selected`;
+        document.getElementById('pm').textContent=`Combined Site: ${Array.from(basket).join(', ')}`;
+    }
+
+    document.getElementById('pa').textContent=totalAcre.toFixed(2);
+    document.getElementById('pc').textContent=`₹${(totalPur/100).toFixed(2)} Cr`;
     document.getElementById('p_lease').textContent=`₹${(lease/100).toFixed(2)} Cr`;
     document.getElementById('p_rent').textContent=`₹${(rent/100).toFixed(2)} Cr`;
+    document.getElementById('ps').textContent=`Verified Bot Data for ${selectedPlots.length} parcels`;
     
-    document.getElementById('ps').textContent=`Official Price: ₹${p.guideline_price_per_acre} Lakhs/acre`;
-    
-    // Optional: Highlighting single plot in a distinct color to show it's selected
-    highlightLayer = L.geoJSON(p.geometry, {
-        style: { color: '#00ffff', weight: 4, fillOpacity: 0.1, interactive: false }
-    }).addTo(map);
+    sel = selectedPlots;
 }
 
 function growSiteFromCurrent() {
