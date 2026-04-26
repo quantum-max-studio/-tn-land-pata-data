@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-04-26T04:04:33.222Z",
+  "generated_at": "2026-04-26T04:16:36.737Z",
   "version": "4.1-production",
-  "total_records": 116,
+  "total_records": 832,
   "data_sources": {
     "geographic_boundaries": "OpenStreetMap via Overpass API (overpass-api.de)",
     "area_calculation": "Turf.js geodesic area computation (sq meters → acres)",
