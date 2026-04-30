@@ -332,55 +332,86 @@
         });
 
         async function runBulkScan(bounds) {
-            document.getElementById('loader').style.display = 'block';
+            const loader = document.getElementById('loader');
+            loader.style.display = 'block';
             const ne = bounds.getNorthEast();
             const sw = bounds.getSouthWest();
             
-            const step = 0.0002; // Very fine grid resolution (~22m) to catch ALL narrow land parcels
+            // Calculate total area to determine if it's too big
+            const poly = turf.bboxPolygon([sw.lng, sw.lat, ne.lng, ne.lat]);
+            const totalAreaAcres = turf.area(poly) * 0.000247105;
+            
+            if (totalAreaAcres > 10000) {
+                alert("Area too large! Please select a smaller area (under 10,000 acres) for high-res scanning.");
+                loader.style.display = 'none';
+                return;
+            }
+
+            // Adaptive step size: don't exceed 100 points per scan
+            let step = 0.0005; 
+            const latDiff = ne.lat - sw.lat;
+            const lngDiff = ne.lng - sw.lng;
+            const estimatedPoints = (latDiff / step) * (lngDiff / step);
+            
+            if (estimatedPoints > 100) {
+                step = Math.max(latDiff, lngDiff) / 10; // Cap at ~100 points
+            }
+
             const foundPlots = [];
+            const pointsToScan = [];
             
             for (let lat = sw.lat; lat <= ne.lat; lat += step) {
                 for (let lng = sw.lng; lng <= ne.lng; lng += step) {
-                    try {
-                        const formData = new URLSearchParams();
-                        formData.append('latitude', lat);
-                        formData.append('longitude', lng);
-                        formData.append('up', '');
-
-                        const response = await fetch('/api/generic_api/v2/land_details', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: formData.toString()
-                        });
-                        const res = await response.json();
-                        if (res.success === 1 && res.data) {
-                            const p = res.data;
-                            const geojson = typeof p.geojson_geom === 'string' ? JSON.parse(p.geojson_geom) : p.geojson_geom;
-                            p.area = turf.area(geojson) * 0.000247105;
-                            
-                            const key = `${p.district_code}-${p.taluk_code}-${p.village_code}-${p.survey_number}-${p.sub_division}`;
-                            // Add to global cart if not already there
-                            if (!cart.find(item => `${item.district_code}-${item.taluk_code}-${item.village_code}-${item.survey_number}-${item.sub_division}` === key)) {
-                                cart.push(p);
-                                foundPlots.push(p);
-                                
-                                // Add persistent layer
-                                L.geoJSON(geojson, {
-                                    style: { color: '#000', weight: 2, fillColor: '#00cc66', fillOpacity: 0.6 },
-                                    interactive: false
-                                }).addTo(cartLayers);
-                            }
-                        }
-                    } catch (err) {}
+                    pointsToScan.push({lat, lng});
                 }
             }
 
-            document.getElementById('loader').style.display = 'none';
+            // Process points one by one to avoid freezing the UI
+            for (let i = 0; i < pointsToScan.length; i++) {
+                const {lat, lng} = pointsToScan[i];
+                document.getElementById('toolBall').innerHTML = `<span style="font-size:10px;">${Math.round((i/pointsToScan.length)*100)}%</span>`;
+                
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('latitude', lat);
+                    formData.append('longitude', lng);
+                    formData.append('up', '');
+
+                    const response = await fetch('/api/generic_api/v2/land_details', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    });
+                    const res = await response.json();
+                    if (res.success === 1 && res.data) {
+                        const p = res.data;
+                        const geojson = typeof p.geojson_geom === 'string' ? JSON.parse(p.geojson_geom) : p.geojson_geom;
+                        p.area = turf.area(geojson) * 0.000247105;
+                        
+                        const key = `${p.district_code}-${p.taluk_code}-${p.village_code}-${p.survey_number}-${p.sub_division}`;
+                        if (!cart.find(item => `${item.district_code}-${item.taluk_code}-${item.village_code}-${item.survey_number}-${item.sub_division}` === key)) {
+                            cart.push(p);
+                            foundPlots.push(p);
+                            L.geoJSON(geojson, {
+                                style: { color: '#000', weight: 2, fillColor: '#00cc66', fillOpacity: 0.6 },
+                                interactive: false
+                            }).addTo(cartLayers);
+                        }
+                    }
+                } catch (err) {}
+                
+                // Tiny delay every 5 requests to let the UI breathe
+                if (i % 5 === 0) await new Promise(r => setTimeout(r, 50));
+            }
+
+            loader.style.display = 'none';
+            document.getElementById('toolBall').innerHTML = `✂️`;
             updateCartUI();
+            
             if (foundPlots.length > 0) {
                 generateReport(foundPlots, "New Area Scan Results");
             } else {
-                alert("No new unique plots found in this selection.");
+                alert("Scan complete. No new unique plots found in this specific grid.");
             }
         }
 
