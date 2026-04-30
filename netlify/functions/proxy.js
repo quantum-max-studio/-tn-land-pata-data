@@ -39,15 +39,19 @@ exports.handler = async (event, context) => {
             path: targetPath,
             method: event.httpMethod,
             headers: {
-                'Content-Type': event.headers['content-type'] || 'application/x-www-form-urlencoded',
-                'X-APP-NAME': event.headers['x-app-name'] || 'NOC',
+                ...event.headers, // Pass through all headers (CORS, x-app-key, etc.)
+                'Host': 'tngis.tn.gov.in',
                 'Referer': 'https://tngis.tn.gov.in/apps/gi_viewer/',
                 'Origin': 'https://tngis.tn.gov.in',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'Accept-Language': 'en-US,en;q=0.9'
+                'X-APP-NAME': 'NOC' // Force 'NOC' as it's more reliable than 'demo'
             }
         };
+        
+        // Remove Netlify-specific headers that might confuse the target server
+        delete options.headers['x-nf-client-connection-ip'];
+        delete options.headers['x-forwarded-for'];
+        delete options.headers['host'];
 
         // Handle POST body
         let body = event.body || '';
