@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: List files for debugging
+        run: ls -R
+
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
@@ -23,12 +26,14 @@ jobs:
           channel: 'stable'
 
       - name: Install dependencies
-        working-directory: mobile_wrapper
-        run: flutter pub get
+        run: |
+          cd mobile_wrapper
+          flutter pub get
 
       - name: Build APK
-        working-directory: mobile_wrapper
-        run: flutter build apk --release
+        run: |
+          cd mobile_wrapper
+          flutter build apk --release --no-pub
 
       - name: Upload APK
         uses: actions/upload-artifact@v3
